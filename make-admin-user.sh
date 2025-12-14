@@ -23,7 +23,7 @@ echo "Password: [HIDDEN]"
 
 
 # うまく動作しない場合、以下のコマンドに直接値を入力して試してみてください
-docker exec ptero_panel php artisan p:user:make \
+docker exec pterodactyl-panel php artisan p:user:make \
   --username="$PANEL_ADMIN_NAME" \
   --name-first="$PANEL_ADMIN_FIRST_NAME" \
   --name-last="$PANEL_ADMIN_LAST_NAME" \
