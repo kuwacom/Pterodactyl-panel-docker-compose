@@ -4,6 +4,8 @@ Pterodactyl を Docker Compose + CFTunnelで簡単に構築
 
 このリポジトリは、Pterodactyl panel を Docker Compose で簡単にセットアップするためのものです
 
+> Pterodactyl wingsはこちら -> [kuwacom/Pterodactyl-wings-docker-compose](https://github.com/kuwacom/Pterodactyl-wings-docker-compose)
+
 ---
 
 ## 📦 セットアップ手順
