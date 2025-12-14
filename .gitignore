@@ -1,0 +1,33 @@
+# Ignore mysql database files
+mysql/
+dump.sql
+
+# Ignore redis dump files
+redis/
+
+# Ignore nginx logs and temp files (if any)
+nginx/logs/
+nginx/temp/
+
+# Ignore Docker files
+docker-compose.override.yaml
+docker-compose.override.yml
+.env
+
+# Ignore VSCode settings and workspace files
+.vscode/
+*.code-workspace
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore node_modules if any (node_modules is not seen but standard to ignore)
+node_modules/
+
+# Ignore logs and temp files
+*.log
+*.tmp
+tmp/
+temp/
+logs/

@@ -1,0 +1,104 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: pterodactyl-mysql
+    restart: unless-stopped
+    environment:
+      TZ: "Asia/Tokyo"
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${DB_DATABASE}"
+      MYSQL_USER: "${DB_USER}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+    volumes:
+      - ./mysql:/var/lib/mysql
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    volumes:
+      - ./redis:/data
+
+  panel:
+    image: ghcr.io/pterodactyl/panel:latest
+    container_name: pterodactyl-panel
+    restart: unless-stopped
+    environment:
+      TZ: "Asia/Tokyo"
+      APP_TIMEZONE: "Asia/Tokyo"
+      CACHE_DRIVER: "redis"
+      SESSION_DRIVER: "redis"
+      QUEUE_DRIVER: "redis"
+      REDIS_HOST: "redis"
+      TRUSTED_PROXIES: "127.0.0.1" # Cloudflare Tunnel経由で接続元IPを正確に取得するために必要 それ以外のproxyを追加する場合はipを追加
+    env_file:
+      - .env
+    depends_on:
+      - mysql
+      - redis
+    volumes:
+      - pterodactyl-app:/app
+    ports:
+      - 8080:80
+
+  queue:
+    # Pterodactyl Queue Worker
+    # `* * * * * php /var/www/pterodactyl/artisan schedule:run >> /dev/null 2>&1` こいつにあたる
+    image: ghcr.io/pterodactyl/panel:latest
+    container_name: pterodactyl-queue
+    restart: unless-stopped
+    environment:
+      TZ: "Asia/Tokyo"
+      APP_TIMEZONE: "Asia/Tokyo"
+      CACHE_DRIVER: "redis"
+      SESSION_DRIVER: "redis"
+      QUEUE_DRIVER: "redis"
+      REDIS_HOST: "redis"
+    env_file:
+      - .env
+    depends_on:
+      - panel
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3"]
+
+  # nginx:
+  #   image: jkaninda/nginx-php-fpm:8.3
+  #   container_name: ptero_nginx
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     # - ./nginx/conf.d:/etc/nginx/conf.d:ro
+  #     # - pterodactyl-app:/var/www/html:ro
+  #     - pterodactyl-app:/var/www/html:ro
+  #     # 署名証明書を配置
+  #     # - ./nginx/certs/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
+  #     # - ./nginx/certs/privkey.pem:/etc/nginx/certs/privkey.pem:ro
+  #   depends_on:
+  #     - panel
+
+  phpmyadmin:
+    image: phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      TZ: "Asia/Tokyo"
+      PMA_HOST: ${PMA_HOST}
+      PMA_USER: ${PMA_USER}
+      PMA_PASSWORD: ${PMA_PASSWORD}
+    depends_on:
+      - mysql
+
+  cloudflared:
+    image: cloudflare/cloudflared
+    command:
+      - tunnel
+      - --no-autoupdate
+      - run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+      - TUNNEL_TRANSPORT_PROTOCOL=${TUNNEL_TRANSPORT_PROTOCOL}
+    restart: always
+    network_mode: service:panel
+
+volumes:
+  pterodactyl-app:
